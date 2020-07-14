@@ -1,0 +1,79 @@
+﻿<mah:MetroWindow x:Class="RandomNumberGenerator.View.RandomNumberGeneratorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RandomNumberGenerator.View"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:vm="clr-namespace:RandomNumberGenerator.ViewModel"
+        mc:Ignorable="d"
+        Title="Random Number Generator" Height="552.155" Width="800" Topmost="True">
+
+    <Window.Resources>
+        <vm:RandomNumberGeneratorViewModel x:Key="viewModel"/>
+    </Window.Resources>
+
+    <Grid DataContext="{StaticResource viewModel}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+
+            <StackPanel Grid.Row="0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" 
+                       Text="Numbers to generate">
+
+                    </TextBlock>
+
+                    <mah:NumericUpDown Grid.Column="1" 
+                               x:Name="nudNumbersToGenerate"
+                               Width="200" 
+                               UpDownButtonsWidth="0"
+                               Minimum="1"
+                               Maximum="{Binding Path=RangeEnd}"
+                               Value="{Binding Path=NumbersToGenerate}">
+                    </mah:NumericUpDown>
+
+                    <Button Grid.Column="2"  
+                            MaxHeight="{Binding ElementName=nudNumbersToGenerate, Path=ActualHeight, UpdateSourceTrigger=PropertyChanged}"
+                            Command="{Binding Path=RunGenerator}"
+                            CommandParameter="{Binding Path=NumbersToGenerate}"
+                            Content="Run">
+                      
+                    </Button>
+
+                </Grid>
+                <Grid>
+                    <TextBlock FontSize="15">
+                          <Run Text="Already generated " />
+                          <Run Text="{Binding Path=GeneratedNumbersPercentageUse}" />
+                          <Run Text="% of numbers" />
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ListView ItemsSource="{Binding Path=GeneratorResult}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn>
+
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+        
+    </Grid>
+</mah:MetroWindow>
