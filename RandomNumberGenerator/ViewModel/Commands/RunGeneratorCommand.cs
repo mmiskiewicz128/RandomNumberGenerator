@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -24,21 +25,25 @@ namespace RandomNumberGenerator.ViewModel.Commands
 
         public bool CanExecute(object parameter)
         {
-            if(parameter == null)
+            if(parameter == null || !ViewModel.CanRunGenerator)
             {
                 return false;
             }
 
-            int value;
+            int value = 0;
             int.TryParse(parameter.ToString(), out value);
 
             return ViewModel.CanGenerateNumbers(value);
         }
 
-        public  void Execute(object parameter)
+        public async void Execute(object parameter)
         {        
-            ViewModel.GenerateNumbers();
+            await ViewModel.GenerateNumbers();
+  
+            ViewModel.AfterResult();
 
+            CanExecute(parameter);
         }
+
     }
 }

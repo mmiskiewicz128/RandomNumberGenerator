@@ -2,17 +2,22 @@
 using RandomNumberGenerator.Model;
 using RandomNumberGenerator.Model.Core;
 using RandomNumberGenerator.ViewModel.Commands;
+using RandomNumberGenerator.ViewModel.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
 
 namespace RandomNumberGenerator.ViewModel
 {
@@ -25,7 +30,7 @@ namespace RandomNumberGenerator.ViewModel
 
         #region Fields
         private static object _lock = new object();
-        private ApplicationDbContext dbContext = new ApplicationDbContext();
+        private CancellationTokenSource cancellationTokenSource;
         private List<int> alreadyGeneratedNumbers = new List<int>();
 
         #endregion
@@ -63,6 +68,40 @@ namespace RandomNumberGenerator.ViewModel
             }
         }
 
+        private int _numbersLeft;
+        public int NumbersLeft
+        {
+            get
+            {
+                return _numbersLeft;
+            }
+
+            set
+            {
+                _numbersLeft = value;
+                
+                OnPropertyChanged(nameof(NumbersLeft));
+
+            }
+        }
+
+
+        private bool _canRunGenerator = true;
+        public bool CanRunGenerator
+        {
+            get
+            {
+                return _canRunGenerator;
+            }
+
+            set
+            {
+                _canRunGenerator = value;
+                OnPropertyChanged(nameof(CanRunGenerator));
+
+            }
+        }
+
         private int _numbersToGenerate;
         public int NumbersToGenerate
         {
@@ -74,12 +113,98 @@ namespace RandomNumberGenerator.ViewModel
             set
             {
                 _numbersToGenerate = value;
+                ResetGenerator();
                 OnPropertyChanged(nameof(NumbersToGenerate));
 
             }
         }
 
+
+        private List<int> _generatorResult;
+        public List<int> GeneratorResult
+        {
+            get
+            {
+                return _generatorResult;
+            }
+
+            set
+            {
+                _generatorResult = value;
+                OnPropertyChanged(nameof(GeneratorResult));
+            }
+        }
+
+        private bool _progressBarVisibility;
+        public bool ProgressBarVisibility
+        {
+            get
+            {
+                return _progressBarVisibility;
+            }
+
+            set
+            {
+                _progressBarVisibility = value;
+                OnPropertyChanged(nameof(ProgressBarVisibility));
+            }
+        }
+
+        private int _progressBarValue;
+        public int ProgressBarValue
+        {
+            get
+            {
+                return _progressBarValue;
+            }
+
+            set
+            {
+                _progressBarValue = value;
+                OnPropertyChanged(nameof(ProgressBarValue));
+            }
+        }
+
+
+        private int _progressBarValuePercentageValue;
+        public int ProgressBarValuePercentageValue
+        {
+            get
+            {
+                return _progressBarValuePercentageValue;
+            }
+
+            set
+            {
+                _progressBarValuePercentageValue = value;
+                OnPropertyChanged(nameof(ProgressBarValuePercentageValue));
+            }
+        }
+
+        private string _StringResult;
+        public string StringResult
+        {
+            get
+            {
+                return _StringResult;
+            }
+            set
+            {
+                _StringResult = value;
+                OnPropertyChanged(nameof(StringResult));
+            }
+
+        }
+
+        #endregion
+
+        #region Commands
         public RunGeneratorCommand RunGenerator
+        {
+            get; set;
+        }
+
+        public CancelCommand Cancel
         {
             get; set;
         }
@@ -90,25 +215,15 @@ namespace RandomNumberGenerator.ViewModel
 
         public RandomNumberGeneratorViewModel()
         {
-            GeneratorResult = new ObservableCollection<int>();
+            if (!DesignerProperties.GetIsInDesignMode(new DependencyObject()))
+            {
+                InitializeData();
+            }
+                        
+            GeneratorResult = new List<int>();
 
             RunGenerator = new RunGeneratorCommand(this);
-            InitailizeData();
-
-        }
-
-        private ObservableCollection<int> _generatorResult;
-        public ObservableCollection<int> GeneratorResult
-        {
-            get
-            {
-                return _generatorResult;
-            }
-
-            set
-            {
-                _generatorResult = value;
-            }
+            Cancel = new CancelCommand(this);
         }
 
         #endregion
@@ -116,52 +231,129 @@ namespace RandomNumberGenerator.ViewModel
 
         #region Public
 
-        private List<int> numns = new List<int>();
-
-        public void GenerateNumbers()
+        public async Task GenerateNumbers()
         {
-            GeneratorResult.Clear();
-            INumbersGenerator numbersGenerator = NumbersGeneratorFactory.CreateGenerator(NumbersToGenerate, RangeStart, RangeEnd, alreadyGeneratedNumbers, new ProgressObserver(null));
-            //var uiContext = SynchronizationContext.Current;
-            //var test = await Task.Run(() => numbersGenerator.Generate())
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken token = cancellationTokenSource.Token;
 
-            Task<List<int>> loadFileTask = Task.Run(() => numbersGenerator.Generate());
+            GeneratorResult = new List<int>();
+            
+            ProgressBarValue = 0;
+            ProgressBarVisibility = true;
+            CanRunGenerator = false;
 
-            Task.WaitAll(loadFileTask);
-            loadFileTask.Wait();
-            Task cleanupTask = loadFileTask.ContinueWith(
-                (antecedent) => {
+            Action<int> action = new Action<int>((value) =>
+            {
+                ProgressBarValue += value;
+                ProgressBarValuePercentageValue = GetPercentageProggress();
+            });
 
-                    foreach (int num in antecedent.Result)
-                    {
-                        GeneratorResult.Add(num);
-                    }
-                },
-                /* do not cancel this task */
-                CancellationToken.None,
-                /* run only if faulted main task */
-                TaskContinuationOptions.OnlyOnFaulted,
-                /* use main SynchronizationContext */
-                TaskScheduler.FromCurrentSynchronizationContext());
+            INumbersGenerator numbersGenerator = NumbersGeneratorFactory.CreateGenerator(NumbersToGenerate, RangeStart, RangeEnd, alreadyGeneratedNumbers, new ProgressObserver(action));
+
+            try
+            {
+                _generatorResult = await Task.Run(() => numbersGenerator.Generate(token), token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            await SaveResult();
+
+            await InitailizeDataAsync();
+
+        }
+
+        public async Task SaveResult()
+        {
+            using (ApplicationDbContext dbContext = new ApplicationDbContext())
+            {
+                await Task.Run(() =>
+                {
+                    dbContext.GeneratedNumbers.AddRange(_generatorResult.Select(i => new GeneratedNumber() { Number = i }));
+              
+                });
+
+                await dbContext.SaveChangesAsync().ConfigureAwait(false);
+            }
+        }
+
+        private async Task InitailizeDataAsync()
+        {
+            using (ApplicationDbContext dbContext = new ApplicationDbContext())
+            {
+                var numbers = await Task.Run(() =>
+                {
+                    return dbContext.GeneratedNumbers;
+                   
+                });
 
 
-            InitailizeData();
+                alreadyGeneratedNumbers =  numbers.Select(r => r.Number).ToList();
+
+                GeneratedNumbersPercentageUse = GetPercentageUse();
+                NumbersLeft = GetNumbersLeft();
+            }
+        }
+
+        public void ResetGenerator()
+        {
+     
+            CanceGeneratorlTask();
+            ProgressBarVisibility = false;
+            ProgressBarValue = ProgressBarValuePercentageValue = 0;
+            CanRunGenerator = true;
+        }
+
+        public void AfterResult()
+        {
+            CanRunGenerator = true;
+            StringResult =  string.Join(", ", _generatorResult);
+
+   
         }
 
         public bool CanGenerateNumbers(int numbersToGenerate)
         {
-            return NumbersToGenerate < RangeEnd - RangeStart - alreadyGeneratedNumbers.Count;
+            return NumbersToGenerate <= RangeEnd - RangeStart - alreadyGeneratedNumbers.Count;
         }
+
+
 
         #endregion
 
         #region Private
 
-        private void InitailizeData()
+        private void CanceGeneratorlTask()
         {
-            var numbers = dbContext.GeneratedNumbers;
-            alreadyGeneratedNumbers = numbers.Select(r => r.Number).ToList();
-            GeneratedNumbersPercentageUse = alreadyGeneratedNumbers.Count == 0 ? 0 : (decimal)(RangeEnd - RangeStart) / (decimal)alreadyGeneratedNumbers.Count;
+            if (!cancellationTokenSource?.IsCancellationRequested ?? false)
+            {
+                cancellationTokenSource?.Cancel();
+            }
+
+        }
+
+        private async void InitializeData()
+        {
+            await InitailizeDataAsync();
+        }
+
+    
+
+        private int GetPercentageProggress()
+        {
+            return NumbersToGenerate == 0 ? 100 : (int)(((decimal)ProgressBarValue / (decimal)NumbersToGenerate) * 100m);
+        }
+
+        private decimal GetPercentageUse()
+        {
+            return alreadyGeneratedNumbers.Count == 0 ? 0 : ((decimal)alreadyGeneratedNumbers.Count / (decimal)(RangeEnd - RangeStart)) * 100m;
+        }
+
+        private int GetNumbersLeft()
+        {
+            return RangeEnd - RangeStart - alreadyGeneratedNumbers.Count;
         }
 
         private void OnPropertyChanged(string propertyName)

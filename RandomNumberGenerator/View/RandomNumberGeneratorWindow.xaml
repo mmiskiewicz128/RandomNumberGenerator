@@ -16,6 +16,7 @@
     <Grid DataContext="{StaticResource viewModel}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="3*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -23,9 +24,11 @@
         <Grid Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center">
 
             <StackPanel Grid.Row="0">
+
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
@@ -41,38 +44,77 @@
                                UpDownButtonsWidth="0"
                                Minimum="1"
                                Maximum="{Binding Path=RangeEnd}"
-                               Value="{Binding Path=NumbersToGenerate}">
+                               Value="{Binding Path=NumbersToGenerate}"
+                               IsEnabled="{Binding Path=CanRunGenerator}">
                     </mah:NumericUpDown>
 
-                    <Button Grid.Column="2"  
-                            MaxHeight="{Binding ElementName=nudNumbersToGenerate, Path=ActualHeight, UpdateSourceTrigger=PropertyChanged}"
+                    <Button Grid.Column="2"          
+                            MaxHeight="{Binding ElementName=nudNumbersToGenerate, Path=ActualHeight}"
                             Command="{Binding Path=RunGenerator}"
-                            CommandParameter="{Binding Path=NumbersToGenerate}"
+                            CommandParameter="{Binding Path=NumbersToGenerate,  UpdateSourceTrigger=PropertyChanged}"
                             Content="Run">
-                      
+
+                    </Button>
+                    <Button Grid.Column="3"  
+                            MaxHeight="{Binding ElementName=nudNumbersToGenerate, Path=ActualHeight}"
+                            Command="{Binding Path=Cancel}"
+                            CommandParameter="{Binding Path=CanRunGenerator, UpdateSourceTrigger=PropertyChanged}"
+                            Content="Abort">
+
                     </Button>
 
                 </Grid>
                 <Grid>
-                    <TextBlock FontSize="15">
+                    <StackPanel>
+                        <TextBlock FontSize="15">
                           <Run Text="Already generated " />
-                          <Run Text="{Binding Path=GeneratedNumbersPercentageUse}" />
+                          <Run Text="{Binding Path=GeneratedNumbersPercentageUse, StringFormat=N2}" />
                           <Run Text="% of numbers" />
-                    </TextBlock>
+                        </TextBlock>
+                        <TextBlock FontSize="15">
+                          <Run Text="Numbers left: " />
+                          <Run Text="{Binding Path=NumbersLeft}" />
+                        
+                        </TextBlock>
+                    </StackPanel>
+                   
                 </Grid>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <ListView ItemsSource="{Binding Path=GeneratorResult}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn>
+        <Grid Grid.Row="2">
+            <ScrollViewer>
+                <TextBlock Text="{Binding Path=StringResult}"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Top"
+                       FontSize="15">
+                </TextBlock>
 
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+            </ScrollViewer>
+        
+
+        </Grid>
+
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <mah:MetroProgressBar Grid.Row="0"
+                                  Margin="0 10 0 0"
+                                  Visibility="{Binding Path=ProgressBarVisibility, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter} }"
+                                  Minimum="0"
+                                  Style="{StaticResource MahApps.Styles.MetroProgressBar}"
+                                  Maximum="{Binding Path=NumbersToGenerate}"
+                                  Value="{Binding Path=ProgressBarValue}">
+
+            </mah:MetroProgressBar>
+            <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Visibility="{Binding Path=ProgressBarVisibility, Converter={StaticResource BooleanToVisibilityConverter}}">
+                           <Run Text="{Binding Path=ProgressBarValuePercentageValue}" />
+                           <Run Text="%" />
+            </TextBlock>
+
         </Grid>
         
     </Grid>

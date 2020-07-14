@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RandomNumberGenerator.ViewModel.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace RandomNumberGenerator.Model.Core
     {
         public static INumbersGenerator CreateGenerator(int numbersToGenerate, int rangeStart, int rangeEnd, List<int> usedNumbers, IProgressObserver progressObserver)
         {
-            IGeneratorData data = new GeneratorData()
+            IGeneratorParams parameters = new GeneratorParams()
             {
                 NumbersToGenerate = numbersToGenerate,
                 RangeStart = rangeStart,
@@ -21,12 +22,12 @@ namespace RandomNumberGenerator.Model.Core
 
             int poolOfNumbers = rangeEnd - rangeStart - usedNumbers.Count;
 
-            if(numbersToGenerate == 0 || poolOfNumbers / numbersToGenerate > 1)
+            if (numbersToGenerate == 0 || (decimal)numbersToGenerate / (decimal)poolOfNumbers < 0.05m)
             {
-                return new CheckMethodNumbersGenerator(data);
+                return new CheckMethodNumbersGenerator(parameters);
             }
 
-            return new RemoveMehodNumbersGenerator(data);
+            return new RemoveMehodNumbersGenerator(parameters);
         }
     }
 }
