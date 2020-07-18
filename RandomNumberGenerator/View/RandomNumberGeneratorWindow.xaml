@@ -97,22 +97,46 @@
 
         <Grid Grid.Row="3">
             <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <mah:MetroProgressBar Grid.Row="0"
+                                  Margin="0 0 0 0"
+                                  Visibility="{Binding Path=ProgressBarVisibility, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter} }"
+                                  Minimum="0"
+                                  Style="{StaticResource MahApps.Styles.ProgressBar}"
+                                  Maximum="{Binding Path=NumbersToGenerate}"
+                                  Value="{Binding Path=ProgressBarGeneratorValue}">
+
+            </mah:MetroProgressBar>
+
+            <mah:MetroProgressBar Grid.Row="1"
                                   Margin="0 10 0 0"
                                   Visibility="{Binding Path=ProgressBarVisibility, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter} }"
                                   Minimum="0"
-                                  Style="{StaticResource MahApps.Styles.MetroProgressBar}"
-                                  Maximum="{Binding Path=NumbersToGenerate}"
-                                  Value="{Binding Path=ProgressBarValue}">
-
+                                  Style="{StaticResource MahApps.Styles.ProgressBar}"
+                                  Maximum="{Binding Path=ProgressBarSaveDataMaxValue}"
+                                  Value="{Binding Path=ProgressBarSaveDataValue}"
+                                  >
+          
             </mah:MetroProgressBar>
-            <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+
+            <TextBlock Grid.Row="2" 
+                       VerticalAlignment="Center" 
+                       HorizontalAlignment="Center"
+                       FontSize="15"
                        Visibility="{Binding Path=ProgressBarVisibility, Converter={StaticResource BooleanToVisibilityConverter}}">
                            <Run Text="{Binding Path=ProgressBarValuePercentageValue}" />
                            <Run Text="%" />
+            </TextBlock>
+
+            <TextBlock Grid.Row="2" 
+                       VerticalAlignment="Center" 
+                       HorizontalAlignment="Right"
+                       FontSize="15"
+                       Text="Data Saving..."
+                       Visibility="{Binding Path=IsDataSaving, Converter={StaticResource BooleanToVisibilityConverter}}">
             </TextBlock>
 
         </Grid>

@@ -33,7 +33,7 @@ namespace RandomNumberGenerator.Model
                 do
                 {
                     token.ThrowIfCancellationRequested();
-                    parameters.ProgressObserver.ProgressInfoAction?.Invoke(1);
+                    parameters.ProgressObserver.ProgressInfoAction?.Invoke(result.Count + 1, parameters.NumbersToGenerate);
                     int index = rand.Next(0, candidates.Count - 1);
                     result.Add(candidates[index]);
                     candidates.RemoveAt(index);

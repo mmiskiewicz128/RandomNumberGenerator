@@ -14,5 +14,6 @@ namespace RandomNumberGenerator.Model.Core
         public int NumbersToGenerate { get ; set ; }
         public List<int> GeneratedNumbers { get ; set ; }
         public IProgressObserver ProgressObserver { get; set; }
+
     }
 }

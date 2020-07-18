@@ -8,6 +8,11 @@ namespace RandomNumberGenerator.ViewModel.Core
 {
     public interface IProgressObserver
     {
-        Action<int> ProgressInfoAction { get; set; }
+        Action<int, int> ProgressInfoAction { get; set; }
+        int ProgressMaxValue { get; set; }
+        int ProgressValue { get; set; }
+
+        void Invoke(int value, int maxValue);
+        void Reset();
     }
 }

@@ -16,9 +16,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Blue.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-
 
             <Style TargetType="TextBlock">
                 <Setter Property="FontSize" Value="20"/>

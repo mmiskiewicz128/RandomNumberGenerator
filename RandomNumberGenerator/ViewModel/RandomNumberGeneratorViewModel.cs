@@ -1,6 +1,7 @@
 ﻿using RandomNumberGenerator.App_System;
 using RandomNumberGenerator.Model;
 using RandomNumberGenerator.Model.Core;
+using RandomNumberGenerator.Model.Extensions;
 using RandomNumberGenerator.ViewModel.Commands;
 using RandomNumberGenerator.ViewModel.Core;
 using System;
@@ -8,7 +9,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Configuration;
+using System.Data;
 using System.Data.Entity;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
@@ -29,7 +33,7 @@ namespace RandomNumberGenerator.ViewModel
         #endregion
 
         #region Fields
-        private static object _lock = new object();
+
         private CancellationTokenSource cancellationTokenSource;
         private List<int> alreadyGeneratedNumbers = new List<int>();
 
@@ -41,7 +45,7 @@ namespace RandomNumberGenerator.ViewModel
         {
             get
             {
-                return Configuration.GetGeneratorNumbersRangeStart();
+                return AppConfiguration.GetGeneratorNumbersRangeStart();
             }
         }
 
@@ -49,7 +53,7 @@ namespace RandomNumberGenerator.ViewModel
         {
             get
             {
-                return Configuration.GetGeneratorNumbersRangeEnd();
+                return AppConfiguration.GetGeneratorNumbersRangeEnd();
             }
         }
 
@@ -150,18 +154,49 @@ namespace RandomNumberGenerator.ViewModel
             }
         }
 
-        private int _progressBarValue;
-        public int ProgressBarValue
+        private int _progressBarGeneratorValue;
+        public int ProgressBarGeneratorValue
         {
             get
             {
-                return _progressBarValue;
+                return _progressBarGeneratorValue;
             }
 
             set
             {
-                _progressBarValue = value;
-                OnPropertyChanged(nameof(ProgressBarValue));
+                _progressBarGeneratorValue = value;
+                OnPropertyChanged(nameof(ProgressBarGeneratorValue));
+            }
+        }
+
+        private int _progressBarSaveDataValue;
+        public int ProgressBarSaveDataValue
+        {
+            get
+            {
+                return _progressBarSaveDataValue;
+            }
+
+            set
+            {
+                _progressBarSaveDataValue = value;
+                OnPropertyChanged(nameof(ProgressBarSaveDataValue));
+            }
+
+        }
+
+        private int _progressBarSaveDataMaxValue = 100;
+        public int ProgressBarSaveDataMaxValue
+        {
+            get
+            {
+                return _progressBarSaveDataMaxValue;
+            }
+
+            set
+            {
+                _progressBarSaveDataMaxValue = value;
+                OnPropertyChanged(nameof(ProgressBarSaveDataMaxValue));
             }
         }
 
@@ -181,27 +216,56 @@ namespace RandomNumberGenerator.ViewModel
             }
         }
 
-        private string _StringResult;
+        private string _stringResult;
         public string StringResult
         {
             get
             {
-                return _StringResult;
+                return _stringResult;
             }
             set
             {
-                _StringResult = value;
+                _stringResult = value;
                 OnPropertyChanged(nameof(StringResult));
             }
-
         }
+
+        private bool _isDataSaving;
+
+        public bool IsDataSaving
+        {
+            get 
+            { 
+                return _isDataSaving; 
+            }
+            set 
+            { 
+                _isDataSaving = value;
+                OnPropertyChanged(nameof(IsDataSaving));
+            }
+        }
+
+        IProgressObserver GeneratorProgressObserver
+        {
+            get; set;
+        }
+
 
         #endregion
 
         #region Commands
+        public RunGeneratorCommand _runGenerator;
         public RunGeneratorCommand RunGenerator
         {
-            get; set;
+            get
+            {
+                return _runGenerator;
+            }
+            set
+            {
+                _runGenerator = value;
+                OnPropertyChanged(nameof(RunGenerator));
+            }
         }
 
         public CancelCommand Cancel
@@ -238,17 +302,12 @@ namespace RandomNumberGenerator.ViewModel
 
             GeneratorResult = new List<int>();
             
-            ProgressBarValue = 0;
+            ProgressBarGeneratorValue = ProgressBarSaveDataValue = 0;
+
             ProgressBarVisibility = true;
             CanRunGenerator = false;
 
-            Action<int> action = new Action<int>((value) =>
-            {
-                ProgressBarValue += value;
-                ProgressBarValuePercentageValue = GetPercentageProggress();
-            });
-
-            INumbersGenerator numbersGenerator = NumbersGeneratorFactory.CreateGenerator(NumbersToGenerate, RangeStart, RangeEnd, alreadyGeneratedNumbers, new ProgressObserver(action));
+            INumbersGenerator numbersGenerator = NumbersGeneratorFactory.CreateGenerator(GetGeneratorParams());
 
             try
             {
@@ -260,7 +319,6 @@ namespace RandomNumberGenerator.ViewModel
             }
 
             await SaveResult();
-
             await InitailizeDataAsync();
 
         }
@@ -269,13 +327,19 @@ namespace RandomNumberGenerator.ViewModel
         {
             using (ApplicationDbContext dbContext = new ApplicationDbContext())
             {
-                await Task.Run(() =>
+                IsDataSaving = true;
+                Action<int, int> action = new Action<int, int>((currentValue, maxValue) =>
                 {
-                    dbContext.GeneratedNumbers.AddRange(_generatorResult.Select(i => new GeneratedNumber() { Number = i }));
-              
+                    ProgressBarSaveDataValue = currentValue;
+                    ProgressBarSaveDataMaxValue = maxValue;
                 });
 
-                await dbContext.SaveChangesAsync().ConfigureAwait(false);
+                await Task.Run(() =>
+                {
+                    dbContext.GeneratedNumbers.BulkInsert(_generatorResult.Select(i => new GeneratedNumber() { Number = i }), new ProgressObserver(action));
+                }).ConfigureAwait(false);
+
+                IsDataSaving = false;
             }
         }
 
@@ -287,8 +351,7 @@ namespace RandomNumberGenerator.ViewModel
                 {
                     return dbContext.GeneratedNumbers;
                    
-                });
-
+                }).ConfigureAwait(false);
 
                 alreadyGeneratedNumbers =  numbers.Select(r => r.Number).ToList();
 
@@ -302,8 +365,9 @@ namespace RandomNumberGenerator.ViewModel
      
             CanceGeneratorlTask();
             ProgressBarVisibility = false;
-            ProgressBarValue = ProgressBarValuePercentageValue = 0;
+            ProgressBarGeneratorValue = ProgressBarValuePercentageValue = ProgressBarSaveDataValue = 0;
             CanRunGenerator = true;
+
         }
 
         public void AfterResult()
@@ -339,11 +403,20 @@ namespace RandomNumberGenerator.ViewModel
             await InitailizeDataAsync();
         }
 
-    
+        private IGeneratorParams GetGeneratorParams()
+        {
+            Action<int, int> action = new Action<int, int>((currentValue, maxValue) =>
+            {
+                ProgressBarGeneratorValue = currentValue;
+                ProgressBarValuePercentageValue = GetPercentageProggress();
+            });
+
+            return ParamsFactory.CreateParams(NumbersToGenerate, RangeStart, RangeEnd, alreadyGeneratedNumbers, new ProgressObserver(action));
+        }
 
         private int GetPercentageProggress()
         {
-            return NumbersToGenerate == 0 ? 100 : (int)(((decimal)ProgressBarValue / (decimal)NumbersToGenerate) * 100m);
+            return NumbersToGenerate == 0 ? 100 : (int)(((decimal)ProgressBarGeneratorValue / (decimal)NumbersToGenerate) * 100m);
         }
 
         private decimal GetPercentageUse()

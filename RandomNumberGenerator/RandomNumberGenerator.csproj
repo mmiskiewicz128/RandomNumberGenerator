@@ -76,13 +76,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="App_System\Configuration.cs" />
+    <Compile Include="App_System\AppConfiguration.cs" />
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\ApplicationDbContext.cs" />
     <Compile Include="Model\CheckMethodNumbersGenerator.cs" />
     <Compile Include="Model\Core\GeneratorParams.cs" />
     <Compile Include="Model\Core\IGeneratorParams.cs" />
     <Compile Include="Model\Core\INumbersGenerator.cs" />
+    <Compile Include="Model\Core\ParamsFactory.cs" />
+    <Compile Include="Model\Extensions\EntityExtensions.cs" />
+    <Compile Include="Model\SwapMethodNumbersGenerator.cs" />
     <Compile Include="ViewModel\Commands\CancelCommand.cs" />
     <Compile Include="ViewModel\Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="ViewModel\Core\IProgressObserver.cs" />
