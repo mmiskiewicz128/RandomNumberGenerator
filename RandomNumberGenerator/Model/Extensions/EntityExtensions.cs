@@ -45,7 +45,7 @@ namespace RandomNumberGenerator.Model.Extensions
 
                 var transaction = connection.BeginTransaction();
 
-                int batchSize = 10000;
+                int batchSize = AppConfiguration.GetResultSaveBatchSize();
                 int batchCount = items.Count() / batchSize;
 
                 batchCount += items.Count() % batchSize > 0 ? 1 : 0;
@@ -53,7 +53,7 @@ namespace RandomNumberGenerator.Model.Extensions
                 using (var bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction))
                 {
                     bulkCopy.BulkCopyTimeout = AppConfiguration.GetConnectionTimeout();
-
+                    
                     for (int i = 0; i < batchCount; i++)
                     {
                         IEnumerable<T> batch = items.Skip(i * batchSize).Take(batchSize);
@@ -62,7 +62,7 @@ namespace RandomNumberGenerator.Model.Extensions
                         bulkCopy.DestinationTableName = dataTable.TableName;
                         bulkCopy.WriteToServer(dataTable);
 
-                        progressObserver.ProgressInfoAction?.Invoke(i + 1, batchCount);
+                        progressObserver.InvokeAction(i + 1, batchCount);
                     }
                 }
 

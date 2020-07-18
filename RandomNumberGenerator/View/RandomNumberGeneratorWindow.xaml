@@ -22,9 +22,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center">
-
             <StackPanel Grid.Row="0">
-
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*"/>
@@ -35,7 +33,6 @@
 
                     <TextBlock Grid.Column="0" 
                        Text="Numbers to generate">
-
                     </TextBlock>
 
                     <mah:NumericUpDown Grid.Column="1" 
@@ -53,16 +50,14 @@
                             Command="{Binding Path=RunGenerator}"
                             CommandParameter="{Binding Path=NumbersToGenerate,  UpdateSourceTrigger=PropertyChanged}"
                             Content="Run">
-
                     </Button>
+
                     <Button Grid.Column="3"  
                             MaxHeight="{Binding ElementName=nudNumbersToGenerate, Path=ActualHeight}"
                             Command="{Binding Path=Cancel}"
-                            CommandParameter="{Binding Path=CanRunGenerator, UpdateSourceTrigger=PropertyChanged}"
+                            CommandParameter="{Binding Path=GeneratorProgressObserver.IsInProgress,  UpdateSourceTrigger=PropertyChanged}"
                             Content="Abort">
-
                     </Button>
-
                 </Grid>
                 <Grid>
                     <StackPanel>
@@ -71,28 +66,50 @@
                           <Run Text="{Binding Path=GeneratedNumbersPercentageUse, StringFormat=N2}" />
                           <Run Text="% of numbers" />
                         </TextBlock>
+
                         <TextBlock FontSize="15">
                           <Run Text="Numbers left: " />
                           <Run Text="{Binding Path=NumbersLeft}" />
-                        
                         </TextBlock>
                     </StackPanel>
-                   
                 </Grid>
             </StackPanel>
         </Grid>
-
         <Grid Grid.Row="2">
-            <ScrollViewer>
-                <TextBlock Text="{Binding Path=StringResult}"
-                       TextWrapping="Wrap"
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" 
                        VerticalAlignment="Top"
-                       FontSize="15">
+                       FontSize="12"
+                       Margin="5 0 0 0 ">
+                    <Run Text="Top"/>
+                    <Run Text="{Binding Path=NumberOfResultsToShow, Mode=OneWay}"/>
+                    <Run Text="of results"/>
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=StringResult}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+
                 </TextBlock>
-
-            </ScrollViewer>
-        
-
+                <ScrollViewer Grid.Row="1">
+                    <TextBlock Text="{Binding Path=StringResult}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Justify"
+                       VerticalAlignment="Top"
+                       FontSize="12">
+                    </TextBlock>
+                </ScrollViewer>
+            </Grid>
+ 
         </Grid>
 
         <Grid Grid.Row="3">
@@ -102,41 +119,53 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <mah:MetroProgressBar Grid.Row="0"
-                                  Margin="0 0 0 0"
-                                  Visibility="{Binding Path=ProgressBarVisibility, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter} }"
+                                  Margin="0 5 0 0"
                                   Minimum="0"
                                   Style="{StaticResource MahApps.Styles.ProgressBar}"
-                                  Maximum="{Binding Path=NumbersToGenerate}"
-                                  Value="{Binding Path=ProgressBarGeneratorValue}">
-
+                                  Maximum="{Binding Path=GeneratorProgressObserver.ProgressMaxValue}"
+                                  Value="{Binding Path=GeneratorProgressObserver.ProgressValue}">
             </mah:MetroProgressBar>
 
             <mah:MetroProgressBar Grid.Row="1"
-                                  Margin="0 10 0 0"
-                                  Visibility="{Binding Path=ProgressBarVisibility, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter} }"
+                                  Margin="0 5 0 0"
                                   Minimum="0"
                                   Style="{StaticResource MahApps.Styles.ProgressBar}"
-                                  Maximum="{Binding Path=ProgressBarSaveDataMaxValue}"
-                                  Value="{Binding Path=ProgressBarSaveDataValue}"
-                                  >
-          
+                                  Maximum="{Binding Path=DataSavingProgressObserver.ProgressMaxValue}"
+                                  Value="{Binding Path=DataSavingProgressObserver.ProgressValue}">
             </mah:MetroProgressBar>
 
             <TextBlock Grid.Row="2" 
                        VerticalAlignment="Center" 
                        HorizontalAlignment="Center"
-                       FontSize="15"
-                       Visibility="{Binding Path=ProgressBarVisibility, Converter={StaticResource BooleanToVisibilityConverter}}">
-                           <Run Text="{Binding Path=ProgressBarValuePercentageValue}" />
+                       FontSize="12"
+                       Visibility="{Binding Path=GeneratorProgressObserver.IsInProgress, Converter={StaticResource BooleanToVisibilityConverter}}">
+                           <Run Text="{Binding Path=GeneratorProgressObserver.PercentageValue}" />
                            <Run Text="%" />
             </TextBlock>
-
+            
             <TextBlock Grid.Row="2" 
                        VerticalAlignment="Center" 
                        HorizontalAlignment="Right"
-                       FontSize="15"
-                       Text="Data Saving..."
-                       Visibility="{Binding Path=IsDataSaving, Converter={StaticResource BooleanToVisibilityConverter}}">
+                       FontSize="12"
+                       Margin="0 0 5 0">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsDataLoading}" Value="False">
+                                <Setter Property="Text" Value=""/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=DataSavingProgressObserver.IsInProgress}" Value="False">
+                                <Setter Property="Text" Value=""/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=IsDataLoading}" Value="True">
+                                <Setter Property="Text" Value="Loading Data..."/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=DataSavingProgressObserver.IsInProgress}" Value="True">
+                                <Setter Property="Text" Value="Saving Result..."/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
             </TextBlock>
 
         </Grid>

@@ -12,13 +12,17 @@ namespace RandomNumberGenerator.App_System
         private static readonly string _generatorNumbersRangeStart;
         private static readonly string _generatorNumbersRangeEnd;
         private static readonly string _connectionTimeout;
-        private static readonly string _connectionString; 
+        private static readonly string _connectionString;
+        private static readonly string _numberOfResultsToShow;
+        private static readonly string _resultSaveBatchSize;
 
         static AppConfiguration()
         {
             _generatorNumbersRangeStart = ConfigurationManager.AppSettings["generatorNumbersRangeStart"];
             _generatorNumbersRangeEnd = ConfigurationManager.AppSettings["generatorNumbersRangeEnd"];
-            _connectionTimeout = ConfigurationManager.AppSettings["connectionTimeout"];
+            _numberOfResultsToShow = ConfigurationManager.AppSettings["numberOfResultsToShow"];
+            _connectionTimeout = ConfigurationManager.AppSettings["resultSaveConnectionTimeout"];
+            _resultSaveBatchSize = ConfigurationManager.AppSettings["resultSaveBatchSize"];
             _connectionString = ConfigurationManager.ConnectionStrings["ApplicationDbContext"]?.ConnectionString;
         }
 
@@ -26,31 +30,41 @@ namespace RandomNumberGenerator.App_System
 
         public static int GetGeneratorNumbersRangeStart()
         {
-            int value = 0;
-            Int32.TryParse(_generatorNumbersRangeStart, out value);
-
-            return value;
+            return GetIntValue(_generatorNumbersRangeStart);
         }
 
         public static int GetGeneratorNumbersRangeEnd()
         {
-            int value = 0;
-            Int32.TryParse(_generatorNumbersRangeEnd, out value);
-
-            return value;
+            return GetIntValue(_generatorNumbersRangeEnd);
         }
 
         public static int GetConnectionTimeout()
         {
-            int value = 0;
-            Int32.TryParse(_connectionTimeout, out value);
+            return GetIntValue(_connectionTimeout);
+        }
 
-            return value;
+        public static int GetNumberOfResultsToShow()
+        {
+            return GetIntValue(_numberOfResultsToShow);
+        }
+
+        public static int GetResultSaveBatchSize()
+        {
+            return GetIntValue(_resultSaveBatchSize);
         }
 
         public static string GetConnectionString()
         {
             return _connectionString;
+        }
+
+
+        private static int GetIntValue(string configValue)
+        {
+            int value = 0;
+            Int32.TryParse(configValue, out value);
+
+            return value;
         }
 
 

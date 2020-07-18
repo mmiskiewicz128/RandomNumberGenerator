@@ -4,6 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace RandomNumberGenerator.ViewModel.Core
 {
@@ -36,7 +39,7 @@ namespace RandomNumberGenerator.ViewModel.Core
             }
         }
 
-        private int _progressMaxValue;
+        private int _progressMaxValue = 100;
 
         public int ProgressMaxValue
         {
@@ -66,6 +69,19 @@ namespace RandomNumberGenerator.ViewModel.Core
             }
         }
 
+        private bool _isInProgress;
+        public bool IsInProgress
+        {
+            get
+            {
+                return _isInProgress;
+            }
+            set
+            {
+                _isInProgress = value;
+                OnPropertyChanged(nameof(IsInProgress));
+            }
+        }
         #endregion
 
         #region Constructor
@@ -89,22 +105,25 @@ namespace RandomNumberGenerator.ViewModel.Core
             ProgressInfoAction = actionAfterResult;
         }
 
-
-        private void OnPropertyChanged(string propertyName)
+        public void InvokeAction(int Value, int maxValue)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+            ProgressInfoAction?.Invoke(Value, maxValue);
 
-        public void Invoke(int Value, int maxValue)
-        {
-            ProgressInfoAction.Invoke(Value, maxValue);
+            bool progresTemp = IsInProgress;
+            IsInProgress = Value > 0 && Value != maxValue;
+
+            if (progresTemp != IsInProgress)
+            {
+                RaiseCanExecuteChanged();
+            }
         }
 
         public void Reset()
         {
             ProgressValue = 0;
-            ProgressMaxValue = 0;
+            ProgressMaxValue = 100;
             PercentageValue = 0;
+            IsInProgress = false;
         }
 
         #endregion
@@ -114,6 +133,16 @@ namespace RandomNumberGenerator.ViewModel.Core
         private decimal GetPercentageValue()
         {
             return ProgressMaxValue == 0 ? 100m : (int)(((decimal)ProgressValue / (decimal)ProgressMaxValue) * 100m);
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void RaiseCanExecuteChanged()
+        {
+            Application.Current.Dispatcher.Invoke(() => CommandManager.InvalidateRequerySuggested());
         }
 
         #endregion

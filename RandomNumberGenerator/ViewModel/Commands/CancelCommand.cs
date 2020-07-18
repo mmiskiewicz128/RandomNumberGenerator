@@ -25,12 +25,15 @@ namespace RandomNumberGenerator.ViewModel.Commands
 
         public bool CanExecute(object parameter)
         {
-            return !ViewModel.CanRunGenerator && !ViewModel.IsDataSaving;
+            return ViewModel.GeneratorProgressObserver.IsInProgress;
+            
         }
 
         public void Execute(object parameter)
         {
             ViewModel.ResetGenerator();
         }
+
+
     }
 }

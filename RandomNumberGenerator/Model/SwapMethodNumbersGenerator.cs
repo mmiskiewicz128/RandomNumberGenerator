@@ -21,8 +21,6 @@ namespace RandomNumberGenerator.Model
         {
             return Task<List<int>>.Run(() =>
             {
-                cancelatonToken.ThrowIfCancellationRequested();
-
                 Random rand = new Random();
 
                 List<int> candidates = new List<int>();
@@ -34,6 +32,8 @@ namespace RandomNumberGenerator.Model
                 int candidatesCount = candidates.Count;
                 for (int i = 0; i < parameters.NumbersToGenerate; i++)
                 {
+                    cancelatonToken.ThrowIfCancellationRequested();
+
                     int roundValue = rand.Next(candidatesCount);
 
                     result.Add(candidates[roundValue]);
@@ -42,12 +42,10 @@ namespace RandomNumberGenerator.Model
 
                     candidatesCount--;
 
-                    parameters.ProgressObserver.ProgressInfoAction?.Invoke(result.Count + 1, parameters.NumbersToGenerate);
+                    parameters.ProgressObserver.InvokeAction(result.Count, parameters.NumbersToGenerate);
                 }
 
                 return result;
-
-
             });
   
         }

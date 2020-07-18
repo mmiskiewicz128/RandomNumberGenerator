@@ -11,8 +11,11 @@ namespace RandomNumberGenerator.ViewModel.Core
         Action<int, int> ProgressInfoAction { get; set; }
         int ProgressMaxValue { get; set; }
         int ProgressValue { get; set; }
+        bool IsInProgress { get; set; }
+        decimal PercentageValue { get; set; }
 
-        void Invoke(int value, int maxValue);
+        void InvokeAction(int value, int maxValue);
+
         void Reset();
     }
 }

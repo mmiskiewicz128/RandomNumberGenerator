@@ -45,5 +45,10 @@ namespace RandomNumberGenerator.ViewModel.Commands
             CanExecute(parameter);
         }
 
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
+
     }
 }
