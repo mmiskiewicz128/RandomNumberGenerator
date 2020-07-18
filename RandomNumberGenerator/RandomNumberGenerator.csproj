@@ -79,7 +79,6 @@
     <Compile Include="App_System\AppConfiguration.cs" />
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\ApplicationDbContext.cs" />
-    <Compile Include="Model\CheckMethodNumbersGenerator.cs" />
     <Compile Include="Model\Core\GeneratorParams.cs" />
     <Compile Include="Model\Core\IGeneratorParams.cs" />
     <Compile Include="Model\Core\INumbersGenerator.cs" />
@@ -92,7 +91,6 @@
     <Compile Include="Model\Core\NumbersGeneratorFactory.cs" />
     <Compile Include="ViewModel\Core\ProgressObserver.cs" />
     <Compile Include="Model\GeneratedNumber.cs" />
-    <Compile Include="Model\RemoveMehodNumbersGenerator.cs" />
     <Compile Include="ViewModel\Commands\RunGeneratorCommand.cs" />
     <Compile Include="ViewModel\RandomNumberGeneratorViewModel.cs" />
     <Compile Include="View\RandomNumberGeneratorWindow.xaml.cs">
