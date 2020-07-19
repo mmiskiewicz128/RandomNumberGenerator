@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using RandomNumberGenerator.App_System;
+using RandomNumberGenerator.ViewModel.Core;
+using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Reflection;
 using System.Data.Entity;
 using System.Data.SqlClient;
-using RandomNumberGenerator.App_System;
-using RandomNumberGenerator.ViewModel.Core;
+using System.Linq;
+using System.Reflection;
 
 namespace RandomNumberGenerator.Model.Extensions
 {
@@ -49,7 +49,7 @@ namespace RandomNumberGenerator.Model.Extensions
                 using (var bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction))
                 {
                     bulkCopy.BulkCopyTimeout = AppConfiguration.GetConnectionTimeout();
-                    
+
                     for (int i = 0; i < batchCount; i++)
                     {
                         IEnumerable<T> batch = items.Skip(i * batchSize).Take(batchSize);
@@ -65,6 +65,6 @@ namespace RandomNumberGenerator.Model.Extensions
                 transaction.Commit();
                 connection.Close();
             }
-        }    
+        }
     }
 }

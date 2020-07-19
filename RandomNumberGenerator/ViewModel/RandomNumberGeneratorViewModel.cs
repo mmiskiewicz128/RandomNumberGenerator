@@ -83,7 +83,7 @@ namespace RandomNumberGenerator.ViewModel
             set
             {
                 _numbersLeft = value;
-                
+
                 OnPropertyChanged(nameof(NumbersLeft));
 
             }
@@ -191,7 +191,7 @@ namespace RandomNumberGenerator.ViewModel
         }
 
         #endregion
-              
+
 
 
         #region Constructor
@@ -202,7 +202,7 @@ namespace RandomNumberGenerator.ViewModel
             {
                 InitializeData();
             }
-                        
+
             GeneratorResult = new List<int>();
 
             RunGenerator = new RunGeneratorCommand(this);
@@ -220,7 +220,7 @@ namespace RandomNumberGenerator.ViewModel
         {
             cancellationTokenSource = new CancellationTokenSource();
             CancellationToken token = cancellationTokenSource.Token;
-            
+
             GeneratorResult = new List<int>();
             CanRunGenerator = false;
             INumbersGenerator numbersGenerator = NumbersGeneratorFactory.CreateGenerator(GetGeneratorParams());

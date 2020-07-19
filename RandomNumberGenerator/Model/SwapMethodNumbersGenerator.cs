@@ -46,7 +46,7 @@ namespace RandomNumberGenerator.Model
 
                 return result;
             });
-  
+
         }
     }
 }

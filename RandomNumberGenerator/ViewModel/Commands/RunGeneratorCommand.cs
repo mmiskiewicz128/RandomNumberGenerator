@@ -6,12 +6,12 @@ namespace RandomNumberGenerator.ViewModel.Commands
     public class RunGeneratorCommand : ICommand
     {
         public RandomNumberGeneratorViewModel ViewModel { get; private set; }
-        
+
         public RunGeneratorCommand(RandomNumberGeneratorViewModel viewModel)
         {
             ViewModel = viewModel;
         }
-              
+
         public event EventHandler CanExecuteChanged
         {
             add { CommandManager.RequerySuggested += value; }
@@ -20,7 +20,7 @@ namespace RandomNumberGenerator.ViewModel.Commands
 
         public bool CanExecute(object parameter)
         {
-            if(parameter == null || !ViewModel.CanRunGenerator)
+            if (parameter == null || !ViewModel.CanRunGenerator)
             {
                 return false;
             }
@@ -32,9 +32,9 @@ namespace RandomNumberGenerator.ViewModel.Commands
         }
 
         public async void Execute(object parameter)
-        {        
+        {
             await ViewModel.GenerateNumbers();
-  
+
             ViewModel.AfterResult();
 
             CanExecute(parameter);

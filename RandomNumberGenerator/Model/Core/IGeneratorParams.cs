@@ -13,6 +13,6 @@ namespace RandomNumberGenerator.Model.Core
 
         List<int> GeneratedNumbers { get; set; }
 
-        IProgressObserver ProgressObserver { get; set; } 
+        IProgressObserver ProgressObserver { get; set; }
     }
 }

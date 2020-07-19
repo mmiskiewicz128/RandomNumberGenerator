@@ -23,12 +23,12 @@ namespace RandomNumberGenerator.ViewModel.Core
 
         public int ProgressValue
         {
-            get 
+            get
             {
-                return _progressValue; 
+                return _progressValue;
             }
-            set 
-            { 
+            set
+            {
                 _progressValue = value;
                 OnPropertyChanged(nameof(ProgressValue));
             }
